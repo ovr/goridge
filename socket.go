@@ -61,22 +61,9 @@ func (rl *SocketRelay) Receive() (data []byte, p Prefix, err error) {
 		return nil, p, nil
 	}
 
-	leftBytes := p.Size()
-	data = make([]byte, 0, leftBytes)
-	buffer := make([]byte, min(leftBytes, rl.BufferSize))
+	data = make([]byte, p.Size())
 
-	for {
-		if n, err := rl.rwc.Read(buffer); err == nil {
-			data = append(data, buffer[:n]...)
-			leftBytes -= uint64(n)
-		} else {
-			return nil, p, err
-		}
-
-		if leftBytes == 0 {
-			break
-		}
-	}
+	_, err = io.ReadFull(rl.rwc, data)
 
 	return
 }

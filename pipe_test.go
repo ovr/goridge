@@ -31,6 +31,25 @@ func TestPipeReceive(t *testing.T) {
 	assert.Empty(t, 0, conn.leftSegments())
 }
 
+func BenchmarkPipeReceive(t *testing.B) {
+	for i := 0; i < t.N; i++ {
+		conn := &connMock{}
+		r := NewPipeRelay(conn, &connMock{})
+		assert.Nil(t, r.Close())
+
+		prefix := NewPrefix().WithFlag(PayloadControl).WithSize(5)
+		payload := []byte("hello")
+
+		conn.expect(read, prefix[:])
+		conn.expect(read, payload)
+
+		_, p, err := r.Receive()
+		assert.Nil(t, err)
+		assert.True(t, p.HasFlag(PayloadControl))
+		assert.Equal(t, uint64(5), p.Size())
+	}
+}
+
 func TestPipeSend(t *testing.T) {
 	conn := &connMock{}
 	r := NewPipeRelay(&connMock{}, conn)
